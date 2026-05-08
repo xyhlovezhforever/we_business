@@ -1,0 +1,465 @@
+# 开发环境配置
+
+[server]
+host = "0.0.0.0"
+port = 6250
+request_timeout_secs = 60
+max_connections = 1000
+
+[llm]
+service_name = "your-llm-service"
+# LLM API 端点（Consul DNS 格式，当 Consul 启用时）
+# 或直接 IP 端点（当 Consul 未启用时）
+endpoint = "http://your-llm-service:9000"
+# 协议类型: "http" 或 "grpc"
+protocol = "grpc"
+# API Key（可选）
+api_key = ""
+# 默认模型
+default_model = "qwen3-max"
+# 请求超时时间（秒）- 增加到 120 秒以容纳 LLM 推理时间
+timeout_secs = 120
+# 最大重试次数
+max_retries = 3
+# 温度参数
+# temperature = 0.7
+temperature = 0.7
+# Top P 参数
+top_p = 0.9
+# 是否启用流式返回
+enable_streaming = true
+# 流式进度图标的最大循环数量（超过此数量后重新从1开始）
+max_streaming_indicators = 5
+
+[tool_service]
+service_name = "your-tool-service"
+# Tool Service gRPC 端点（Consul DNS 格式，当 Consul 启用时）
+# 或直接 IP 端点（当 Consul 未启用时）
+endpoint = "http://your-tool-service:8100"
+# 协议类型: "http" 或 "grpc"
+protocol = "grpc"
+# 连接超时时间（秒）
+connect_timeout_secs = 5
+# 请求超时时间（秒）
+timeout_secs = 7200
+# 最大重试次数
+max_retries = 3
+
+[database_service]
+service_name = "your-db-service"
+# Database Service gRPC 端点（Consul DNS 格式，当 Consul 启用时）
+# 或直接 IP 端点（当 Consul 未启用时）
+endpoint = "http://your-db-service:9001"
+# 协议类型: "http" 或 "grpc"
+protocol = "http"
+# 连接超时时间（秒）
+connect_timeout_secs = 5
+# 请求超时时间（秒）
+timeout_secs = 60
+# 最大重试次数
+max_retries = 3
+# 数据库连接字符串
+connection_string = "postgresql://your_user:your_password@localhost:5432/your_db"
+# 最大连接数
+max_connections = 20
+
+[kafka_service]
+# 是否启用
+enabled = true
+# Kafka brokers 地址列表（直接连接 Kafka broker）
+brokers = ["localhost:9092"]
+# 主题名称（审计日志主题）
+topic = "task-audit-log"
+# 压缩类型
+compression = "none"
+# 连接超时时间（秒）
+connect_timeout_secs = 5
+# 请求超时时间（秒）
+timeout_secs = 60
+# 最大重试次数
+max_retries = 3
+
+# 任务事件主题配置
+[kafka_service.event_topics]
+task_created = "task.created"
+task_completed = "task.completed"
+task_failed = "task.failed"
+
+[orchestrator]
+# 最大反思轮次（已弃用，由大模型决定是否继续反思）
+# 保留此配置项仅用于向后兼容，实际不再生效
+# max_reflection_rounds = 5
+# 任务执行超时时间（秒）
+task_timeout_secs = 3600
+# 是否启用自动反思
+enable_auto_reflection = true
+# 成功评分阈值（0-100）
+success_threshold = 80.0
+# 最大并发任务数
+# max_concurrent_tasks = 10
+max_concurrent_tasks = 1000
+# 是否启用内置工作流
+enable_builtin_workflows = true
+
+# ==================== 并行执行配置 ====================
+# 是否启用并行执行
+# - true: 自动检测无依赖步骤并并行执行（推荐）
+# - false: 强制串行执行（向后兼容模式）
+# 【生产级特性】支持动态开启/关闭，可用于紧急回滚
+enable_parallel_execution = true
+# 我主要使用的并行是步骤内并行
+
+
+
+# 并行执行的最大并发数
+# 控制同时执行的最大步骤数量，避免资源耗尽
+# 建议值：
+# - IO密集型任务: CPU核心数 * 2~4
+# - CPU密集型任务: CPU核心数
+# - 混合型任务: CPU核心数 * 2
+# 默认值: 8（适合4核CPU的IO密集型任务）
+parallel_max_concurrent = 8
+
+# 并行执行的最小步骤数阈值
+# 只有当计划步骤数量 >= 此阈值时，才会启用并行执行
+# 对于步骤数较少的简单任务，串行执行开销更小
+# 默认值: 2
+parallel_min_steps = 1
+
+# ==================== 单步决策配置 ====================
+# 是否启用单步决策 (实验性特性)
+# - true: 在每个步骤成功后调用单步决策器,动态调整后续执行计划
+# - false: 步骤成功后直接继续执行下一步(默认行为)
+enable_step_decision = true
+
+# 单步决策置信度阈值 (0-100)
+# 只有当决策器的置信度高于此阈值时,才会应用调整建议
+# 开发环境建议值: 70.0 (便于测试)
+step_decision_confidence_threshold = 70.0
+
+
+[reflection]
+# 是否启用步骤级反思
+enable_step_level_reflection = true
+
+# ==================== 以下配置项已弃用 ====================
+# 是否继续反思/重试/重新规划完全由大模型决定
+# 保留这些配置项仅用于向后兼容，实际不再生效
+
+# 最大连续失败次数（已弃用，由大模型决定是否继续）
+# max_consecutive_failures = 3
+
+# 最大重新规划次数（已弃用，由大模型决定是否继续）
+# max_replanning_attempts = 3
+
+
+
+[logging]
+# 运行信息使用info级别，错误信息使用error级别，其他信息使用warn级别
+# 日志级别: trace, debug, info, warn, error
+#  日志级别为info时表示  info, warn, error 都会输出，trace, debug,不会输出
+level = "error"
+# 是否输出到控制台
+console = true
+# 是否输出到文件
+file = false
+# 日志文件路径
+file_path = "logs/your-service.log"
+# 日志格式: text, json
+format = "text"
+
+
+[consul]
+# 是否启用 Consul 服务注册
+enabled = true
+# Consul 服务器地址
+host = "127.0.0.1"
+port = 8500
+# 服务信息
+service_name = "your-service"
+service_host = "127.0.0.1"
+service_port = 8084
+# 健康检查配置（gRPC 使用 TCP 检查）
+health_check_interval = 10
+health_check_timeout = 5
+# 对于 gRPC 服务，使用 TCP 检查端口是否可达
+health_check_url = "http://127.0.0.1:8084/health"
+
+[response]
+# 响应消息模式：developer(开发者模式)或 user(用户模式)
+# developer: 技术性、简洁的消息,适合开发调试
+# user: 人性化、友好的中文消息,适合最终用户
+mode = "user"
+
+[debug]
+# 是否将LLM响应和工具查询信息写入调试文件
+# true: 写入文件 debug_log.txt，用于调试和问题排查
+# false: 不写入文件，减少I/O开销
+save_debug_log = true
+# 调试日志文件路径
+debug_log_file = "test_log.txt"
+
+# 是否将上下文工程事件写入文件进行自我验证
+# true: 在任务完成时将上下文工程事件内容写入文件
+# false: 不写入文件,仅通过gRPC发送
+save_context_engineering_event = false
+
+# 上下文工程事件文件路径
+context_engineering_file = "context_engineering_events.txt"
+
+# 是否启用任务后评估（对已完成任务进行经验提炼）
+# true: 在任务完成后对整个任务执行过程进行评估分析，生成经验总结
+# false: 不进行任务后评估
+enable_post_task_evaluation = true
+
+# 任务后评估结果文件路径（Markdown格式）
+post_task_evaluation_file = "post_task_evaluations.md"
+
+# ==================== 动态参数推断配置 ====================
+# 是否启用动态参数推断（运行时调用LLM生成参数）
+# - true: 步骤执行时调用LLM根据上下文动态生成参数
+# - false: 使用规划阶段确定的槽位参数（默认行为）
+enable_dynamic_parameter_inference = true
+
+# ==================== 输出截断配置 ====================
+# 是否启用输出截断
+# - true: 启用截断,使用 output_truncate_max_length 指定的长度
+# - false: 不截断,显示完整输出（默认）
+#
+# 适用于以下场景：
+# - AI报告生成中的步骤输出
+# - 参数推断提示中的历史记录输出
+# - 执行日志文件中的输出
+#
+# 建议值：
+# - 开发环境：false（不截断，方便调试）
+# - 生产环境：true（截断，减少token消耗和日志体积）
+enable_output_truncate = false
+
+# 输出截断最大长度（字符数）
+# 仅当 enable_output_truncate = true 时生效
+# 默认值: 1000
+output_truncate_max_length = 1000
+
+# ==================== 事件调试日志配置 ====================
+# 是否将发送的事件以名称+内容的形式写入调试文件
+# true: 每次发送事件时，同时追加写入文件，用于调试事件流
+# false: 不写入事件调试文件
+save_event_debug_log = true
+# 事件调试日志文件路径
+event_debug_log_file = "event_debug_log.txt"
+
+# ==================== 决策分析配置 ====================
+[decision_analysis]
+# 是否启用决策分析功能（位于任务分析 Phase 0 之前执行，称为 Phase -1）
+# - true: 在任务分析之前先进行决策分析，判断用户意图
+#   1. 自由聊天 → 直接回复用户，不进入任务编排流程
+#   2. 需求模糊 → 向用户澄清需求（说明要做什么及执行前置条件）
+#   3. 需求明确 → 继续调用任务分析
+# - false: 跳过决策分析，直接进入任务分析阶段（原有行为）
+enabled = true
+
+
+
+[ai]
+api_key = ""
+
+# ==================== Qwen 大模型直连配置 ====================
+[qwen]
+# 是否启用 Qwen 直连（优先级高于 LLM 微服务）
+enabled = true
+# 阿里云 DashScope API Key
+api_key = ""
+# DashScope OpenAI 兼容接口端点
+endpoint = "https://your-llm-provider.example.com/v1/chat/completions"
+# 默认模型（可选：qwen-max / qwen-plus / qwen-turbo / qwen3-max / qwen3-plus / qwen3-turbo）
+default_model = "qwen3-max"
+# 请求超时（秒）
+timeout_secs = 120
+# 最大重试次数
+max_retries = 3
+# 温度参数
+temperature = 0.7
+# Top P 参数
+top_p = 0.9
+
+# ==================== 任务分析配置 ====================
+[task_analysis]
+# 是否启用任务分析功能
+# - true: 在工具筛选和任务规划之前执行任务分析（Phase 0）
+# - false: 跳过任务分析，直接进入工具筛选阶段
+enabled = true
+
+# 使用增强描述的置信度阈值（0-100）
+# 只有当任务分析的整体置信度 >= 此阈值时，才使用增强描述
+confidence_threshold_for_reuse = 80.0
+
+# 是否使用增强后的任务描述
+# - true: 使用任务分析生成的增强描述替代原始任务描述
+# - false: 保持使用原始任务描述
+use_enhanced_description = true
+
+# 是否启用复杂度自适应
+# - true: 根据任务复杂度动态调整规划粒度
+# - false: 使用统一的规划策略
+enable_complexity_adaptation = true
+
+# -------------------- 【新增 v1.5】提示词精简配置 --------------------
+# 是否使用精简版系统提示词（性能优化）
+# - true: 使用精简版提示词（约600-700 tokens，减少60-65%）
+# - false: 使用完整版提示词（约1800-2000 tokens，包含详细示例）
+#
+# 精简版提示词保留所有核心指导，但压缩JSON示例和注意事项。
+# 实测结果：精简版对分析质量无明显影响，但可减少15-20%的LLM调用时间。
+#
+# 性能对比：
+# - 完整版：约4000-5000ms，8492 tokens
+# - 精简版：约3200-3400ms，预计约5000 tokens
+#
+# 推荐配置：
+# - 开发环境：true（快速迭代）
+# - 生产环境：true（性能优先）
+# - 需要详细分析时：false（质量优先）
+use_compact_prompt = true
+
+# -------------------- 【新增 v1.6】自然语言输出配置 --------------------
+# 是否输出任务分析的自然语言描述
+# - true: 任务分析完成后，向客户端发送格式化的分析报告消息
+#         （包含目标、关键需求、工具覆盖度、缺失工具、执行方案等）
+# - false: 任务分析完成后，仅发送状态事件，不输出自然语言描述
+#
+# 设为 false 可以减少前端展示的冗余信息，让界面更简洁
+output_natural_language_report = true
+
+# -------------------- 【新增 v1.7】工具类别预筛选配置 --------------------
+# 是否启用工具类别预筛选（任务分析前的 LLM 预过滤步骤）
+# - true: 在任务分析前，先调用 LLM 筛选最相关的工具类别，再将对应工具传递给任务分析
+# - false: 跳过类别预筛选，将所有工具直接传递给任务分析（原有行为）
+enable_category_prefilter = true
+
+# 启用工具类别预筛选的最小工具数量阈值
+# 只有当可用工具总数 >= 此阈值时，才执行类别预筛选 LLM 调用
+# 工具数量较少时预筛选收益不大，反而增加一次 LLM 往返延迟
+category_prefilter_min_tools = 30
+
+# 类别预筛选时的兜底类别名称
+# 当 LLM 无法从任务描述中推断出任何相关类别时，至少保留该类别的工具
+category_prefilter_fallback_category = "工具管理"
+
+# -------------------- 【新增 v1.8】分析等待辅助信息配置 --------------------
+# 是否在任务分析等待期间定时发送辅助信息
+# - true: LLM 调用期间按固定间隔向客户端发送提示消息，缓解长时间等待的空白感
+# - false: 不发送辅助信息（默认行为）
+enable_analysis_heartbeat = true
+
+# 辅助信息发送间隔（毫秒）
+# 每隔多少毫秒发送一条辅助信息，仅当 enable_analysis_heartbeat = true 时生效
+analysis_heartbeat_interval_ms = 3000
+
+# 辅助信息列表（按顺序循环发送）
+# 留空数组时使用内置默认消息：
+#   "正在深度解析任务需求，请稍候..."
+#   "正在匹配可用工具与任务目标..."
+#   "正在评估工具覆盖度与执行可行性..."
+#   "正在生成最优执行策略..."
+#   "任务分析即将完成，请耐心等待..."
+# 自定义示例：
+# analysis_heartbeat_messages = ["分析中，请稍候...", "即将完成..."]
+analysis_heartbeat_messages = [
+    "正在倾听你的需求，用心理解你想表达的...",
+    "正在感受你描述的情绪与状态...",
+    "正在寻找最适合你当下的支持方式...",
+    "正在为你准备个性化的回应...",
+    "正在理解你话语背后的情感...",
+    "正在思考如何更好地帮助你...",
+    "正在整理与你相关的支持资源...",
+    "正在感知你现在的情绪温度...",
+    "正在探索最适合你的沟通方式...",
+    "正在回顾我们之前的对话，更好地理解你...",
+    "正在分析你的情绪变化趋势...",
+    "正在为你匹配合适的情绪调节方法...",
+    "正在思考如何让你感受到被理解...",
+    "正在寻找能真正触动你的支持方式...",
+    "正在整合你表达的所有信息...",
+    "正在识别你最需要关注的情绪信号...",
+    "正在为你构建个性化的支持方案...",
+    "正在思考最温暖的回应方式...",
+    "正在评估哪种方式对你最有帮助...",
+    "正在为你梳理情绪背后的需求...",
+    "正在寻找与你情绪相呼应的支持资源...",
+    "正在分析你的表达，寻找深层需求...",
+    "正在思考如何陪伴你度过这段时刻...",
+    "正在准备一些可能对你有帮助的建议...",
+    "正在用心感受你的状态，稍等一下...",
+    "正在回顾你分享的内容，深入理解你...",
+    "正在为你寻找情绪疏导的最佳路径...",
+    "正在思考如何让你感到不那么孤单...",
+    "正在整理能帮你找到内心平静的方法...",
+    "马上就好，感谢你的耐心等待..."
+]
+
+
+
+# ============================================================
+# CLI 工具配置
+# ============================================================
+[cli]
+color_output = true
+verbose = false
+
+# 自定义进入交互模式的触发关键词
+# 配置后，运行 `orchestrate <关键词>` 即可直接进入 chat 交互模式
+# 例如：orchestrate zxh  或  orchestrate ai
+chat_triggers = ["zxh", "ai", "chat"]
+
+# ============================================================
+# PostgreSQL 数据库配置
+# ============================================================
+[postgres]
+# 数据库主机地址
+host = "localhost"
+# 数据库端口（默认 5432）
+port = 5432
+# 数据库名称
+database = "your_database"
+# 数据库用户名
+user = "your_user"
+# 数据库密码（生产环境建议通过环境变量 APP_POSTGRES_PASSWORD 注入）
+password = "your_password_here"
+# 连接池最大连接数
+max_connections = 20
+# 连接池最小空闲连接数
+min_connections = 2
+# 连接超时时间（秒）
+connect_timeout_secs = 10
+# 空闲连接超时时间（秒），0 表示不超时
+idle_timeout_secs = 600
+# 是否启用 SSL（生产环境建议开启）
+ssl_enabled = false
+# SSL 证书路径（ssl_enabled = true 时需要配置）
+# ssl_cert_path = "/path/to/server.crt"
+
+# ============================================================
+# Redis 缓存配置
+# ============================================================
+[redis]
+# Redis 主机地址
+host = "localhost"
+# Redis 端口（默认 6379）
+port = 6379
+# 使用的数据库索引（0-15）
+db = 0
+# 认证密码（未设置密码时注释掉此行）
+# password = "your_redis_password"
+# 连接池最大连接数
+pool_size = 10
+# 连接超时时间（秒）
+connect_timeout_secs = 5
+# 命令执行超时时间（秒）
+command_timeout_secs = 3
+# 默认缓存 TTL（秒），0 表示永不过期
+default_ttl_secs = 3600
+# 键名前缀（用于多服务共享 Redis 时隔离命名空间）
+key_prefix = "tos:"
+# 是否启用 TLS（生产环境建议开启）
+tls_enabled = false

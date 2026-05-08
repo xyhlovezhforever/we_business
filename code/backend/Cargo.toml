@@ -1,0 +1,137 @@
+[package]
+name = "task-orchestration-service"
+version = "0.1.0"
+edition = "2021"
+authors = ["Task Orchestration Team"]
+description = "A production-grade task orchestration service with Reflective Planning"
+
+[dependencies]
+# Web 框架
+axum = { version = "0.7", features = ["ws"] }
+tokio = { version = "1.35", features = ["full"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+tokio-util = "0.7"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["trace", "cors", "timeout", "limit"] }
+
+# gRPC
+tonic = "0.11"
+prost = "0.12"
+prost-types = "0.12"
+
+# HTTP 客户端
+reqwest = { version = "0.11", features = ["json"] }
+
+# 序列化/反序列化
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+
+# 配置管理
+config = "0.14"
+
+# 日志和追踪
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-appender = "0.2"
+
+# 错误处理
+thiserror = "1.0"
+anyhow = "1.0"
+
+# 时间处理
+chrono = { version = "0.4", features = ["serde"] }
+
+# 静态变量
+lazy_static = "1.4"
+
+# UUID 生成
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# 并发控制
+dashmap = "5.5"
+parking_lot = "0.12"
+
+# 异步 trait
+async-trait = "0.1"
+
+# 随机数生成
+rand = "0.8"
+
+# PostgreSQL (历史记录持久化)
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid", "json"] }
+
+# Redis (用户登录 session)
+redis = { version = "0.27", features = ["tokio-comp", "connection-manager"] }
+
+# 密码哈希
+argon2 = "0.5"
+
+# 流处理
+futures-util = "0.3"
+
+# 终端颜色输出
+colored = "2.1"
+
+# 正则表达式
+regex = "1.10"
+
+# Kafka 支持（可选）
+# 使用 cmake 特性在 Windows 上更容易编译
+rdkafka = { version = "0.36", optional = true, features = ["cmake-build"] }
+
+[build-dependencies]
+tonic-build = "0.11"
+
+[features]
+default = []
+kafka = ["rdkafka"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+# 可执行文件配置
+[[bin]]
+name = "task-orchestration-service"
+path = "src/main.rs"
+
+[[bin]]
+name = "task-orchestration-service-grpc"
+path = "src/main_grpc.rs"
+
+# CLI 工具
+[[bin]]
+name = "orchestrate"
+path = "src/bin/orchestrate.rs"
+
+# 快捷入口：直接运行 zxh 进入交互模式
+[[bin]]
+name = "zxh"
+path = "src/bin/orchestrate.rs"
+
+[[example]]
+name = "kafka_audit_example"
+path = "examples/kafka_audit_example.rs"
+
+[[example]]
+name = "universal_case_test"
+path = "examples/universal_case_test.rs"
+
+[[example]]
+name = "digital_twin_test"
+path = "examples/digital_twin_test.rs"
+
+[[example]]
+name = "concurrent_batch_test"
+path = "examples/concurrent_batch_test.rs"
+
+[[example]]
+name = "multi_turn_conversation_test"
+path = "examples/multi_turn_conversation_test.rs"
+
+[[example]]
+name = "multi_turn_plc_test"
+path = "examples/multi_turn_plc_test.rs"
